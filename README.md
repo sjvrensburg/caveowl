@@ -16,6 +16,10 @@ AMD Strix Halo box (128 GB unified memory) and runs as that box's everyday assis
 
 The recipe, the data builders and the gate are here. The weights are not published.
 
+**Just point your agent here.** Tell your coding agent (Claude Code, Codex, pi, ...) to read
+[`llms.txt`](llms.txt) and train caveowl for you. It lists the decisions to ask you about first,
+every command in order, how to check each step, and the failures seen so far.
+
 ## What it does
 
 Same prompt, same server settings, temperature 0:
@@ -67,7 +71,9 @@ answers your use depends on before you deploy it.
   - [pi](https://github.com/earendil-works/pi), the coding agent, for the skill-trajectory data
     and the skill gates.
   - [llm-bench-kit](https://github.com/sjvrensburg/llm-bench-kit) for the tool and code gates.
-  - An Anthropic API key, to caveman-rewrite text with Claude when you build your own corpus.
+  - An Anthropic API key, for the Claude rewrites that build the caveman text pairs, the tool
+    slice's prose and the agent-loop answers. Every rewrite has a `--dry-run` that prints the cost
+    first.
 
 ## Train your own
 
@@ -213,7 +219,9 @@ Rows for the 35B run at the recipe above: 3,847 rows, 4.8M tokens, 22% of them c
 [JuliusBrussee/cavegemma](https://github.com/JuliusBrussee/cavegemma)'s corpus pipeline
 (`data/build_corpus.py`, `synthesize.py`): prompts from permissively licensed sources, answers
 rewritten in caveman style by Claude. Rows are `{"prompt": ..., "target": ...}` (plus optional
-`category`, `context`).
+`category`, `context`). `data/synthesize_batch.py` does the Claude rewrite through the Message
+Batches API, half the price of single calls; run cavegemma's `filter.py` and `split.py` on its
+output.
 
 **Tool calls** (`data/in/tool.jsonl`). One JSON object per row:
 
@@ -232,7 +240,10 @@ The release used rows from
 [nvidia/Nemotron-Agentic-v1](https://huggingface.co/datasets/nvidia/Nemotron-Agentic-v1)
 (multi-turn, assistant prose rewritten in caveman style, calls and results unchanged) and xLAM
 call-only rows from [HuggingFaceTB/smoltalk2](https://huggingface.co/datasets/HuggingFaceTB/smoltalk2),
-both CC-BY-4.0. The builder for this slice is not in the repo yet; any rows in this shape work.
+both CC-BY-4.0. Build it with `data/build_tool_corpus.py` (fetches and normalises the rows),
+`data/synthesize_batch.py --tool-corpus` (rewrites only the prose, through Claude's Message
+Batches API) and `data/filter_tool_pairs.py` (keeps rows whose calls and results are unchanged
+and whose prose actually got shorter). Any rows in this shape work.
 
 **Skill trajectories** depend on your agent. `data/build_skill_anchor.py` drives real pi sessions
 against the stock model in throwaway directories, keeps the ones that read the skill, ran its
@@ -246,9 +257,11 @@ outside the scratch directory. Put your machine's secret locations in
 `~/.config/caveowl/bench-guard-extra.txt`, one regex per line.
 
 **Agent loops.** `data/build_synthtraces.py` converts synthtraces sessions to rows (first exchange,
-thinking dropped), and `data/skills_wrap_ext.py` adds a list of skills that do not apply. The
-caveman rewrite of their answers was a Claude batch job outside this repo; without it, set
-`ext_share = 0`.
+thinking dropped), `data/synthesize_batch.py --tool-corpus` rewrites their answers, and
+`data/skills_wrap_ext.py` adds a list of skills that do not apply (copied from your skill
+trajectories' system prompts). The release did not filter these rows; running
+`data/filter_tool_pairs.py` on them first is stricter and keeps far fewer. Without the rewrite,
+set `ext_share = 0`.
 
 How rows are rendered and masked, which modules get LoRA and where the memory goes:
 [docs/internals.md](docs/internals.md).
@@ -307,7 +320,7 @@ model; the text pairs and tool rows can be reused.
 |---|---|
 | `config.toml`, `config_smoke.toml` | the recipe and its memory smoke test |
 | `train_unsloth.py`, `owl_data.py`, `owl_load.py` | trainer, rendering and loss masks, checkpoint loading |
-| `data/` | slice builders and filters |
+| `data/` | slice builders, the Claude batch rewriter (`synthesize_batch.py`) and filters |
 | `eval/` | the skill, thinking-on and held-out code gates |
 | `merge_and_gguf.sh`, `merge_owl.py` | merge, convert, quantize |
 | `scripts/serve_bench.sh`, `scripts/gate.sh` | bench server and the full gate |

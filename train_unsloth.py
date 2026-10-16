@@ -1,6 +1,6 @@
 """caveowl: bf16 LoRA of Ornith-1.5-35B-A3B toward cavegemma's terse "caveman" style, with Unsloth.
 
-Same data mix and hyperparameters as cavegemma v3 (../cavegemma-e4b, live on :8092 as E4B):
+Same data mix and hyperparameters as cavegemma's Gemma-4-E4B port (v3):
 caveman text pairs + tool slice (~25%) + self-distilled MBPP code anchors (~20%) + self-distilled
 pi skill trajectories (x2), 1 epoch, lr 1e-4, r16/a32. What is new here and why:
 
@@ -132,8 +132,8 @@ def main() -> None:
                            "(run data/build_skill_anchor.py)")
 
     # ---- external Qwen3.6 pi sessions (data/build_synthtraces.py), caveman-rewritten answers
-    # (cavegemma's synthesize_batch.py --tool-corpus, Haiku). General multi-step tool loops on
-    # the student's base distribution; no skill reads (see build_synthtraces.py).
+    # (data/synthesize_batch.py --tool-corpus, Haiku), skills listed (data/skills_wrap_ext.py).
+    # General multi-step tool loops on the student's base distribution; no skill reads.
     if dc.get("ext_share", 0) > 0:
         ext_path = rpath(dc["ext_path"])
         if ext_path.exists():
@@ -141,7 +141,7 @@ def main() -> None:
                                                dc["ext_share"], label="ext")
             parts["ext"] = ext_train
         else:
-            missing.append(f"{ext_path} (run data/build_synthtraces.py + the Haiku rewrite)")
+            missing.append(f"{ext_path} (data/build_synthtraces.py, data/synthesize_batch.py --tool-corpus, data/skills_wrap_ext.py)")
 
     # ---- bounded tool calls (data/build_bound_anchor.py, run 4): stock's own calls that carry
     # a user-stated bound/flag, at the served sampler. Runs 1-3 missed sampler-check 27-29/30.

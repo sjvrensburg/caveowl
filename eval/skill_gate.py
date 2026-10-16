@@ -1,6 +1,6 @@
 """Skill follow-through gate: does a candidate, driven through REAL pi, finish multi-step work?
 
-caveowl copy of ../cavegemma-e4b/eval/skill_gate.py (9dd4267): the pi provider/model are Ornith's
+caveowl copy of cavegemma's eval/skill_gate.py (the Gemma-4-E4B port): the pi provider/model are Ornith's
 (data/pi_traj.py PROVIDER, MODEL); prompts, judge and pass rule are unchanged. Run stock and
 candidate on the same bench flags (scripts/serve_bench.sh), one at a time on :8110.
 

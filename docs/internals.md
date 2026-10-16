@@ -5,7 +5,7 @@ How the training rows are rendered and masked, which modules get LoRA, and where
 ## Template and loss masking
 
 llama-server serves the template **embedded in the GGUF**, which is an Unsloth-fixed variant of
-the HF repo's `chat_template.jinja` (halo-prep pitfall #29): it merges a developer message into
+the HF repo's `chat_template.jinja` : it merges a developer message into
 the system turn and renders scalar tool arguments with `|string` instead of `|tojson`. The
 markup the masks depend on is identical in both, but training renders with the GGUF's copy
 (`template/`), extracted byte-exact from `Ornith-1.5-35B-Q4_K_M.gguf`.

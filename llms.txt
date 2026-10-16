@@ -1,0 +1,225 @@
+# caveowl
+
+> A recipe for teaching ornith-ai/Ornith-1.5-35B-A3B (a Qwen3.6-35B-A3B fine-tune) to answer in
+> terse "caveman" style through a bf16 LoRA trained with Unsloth, while keeping its tool calls,
+> code and agent-skill use at the stock model's level. This file tells a coding agent how to run
+> the whole pipeline on its user's machine: what to ask the user first, every command in order,
+> how to check each step, and what usually goes wrong.
+
+- [README](README.md): what caveowl does, results, the data slices and the gate, for people
+- [config.toml](config.toml): the recipe (data shares, LoRA targets, hyperparameters)
+- [docs/runs.md](docs/runs.md): five real runs, each failure and its fix, with numbers
+- [docs/internals.md](docs/internals.md): rendering, loss masks, LoRA targets, memory
+
+## Instructions for agents
+
+You are implementing this pipeline for your user. It takes a day or more of machine time, needs
+most of a large GPU, and can spend money on the Anthropic API. Work in this order, check each
+step's output before the next, and stop and ask whenever a check fails or a decision below is
+not yet made.
+
+### Ask the user before starting
+
+1. **Hardware.** bf16 training peaks at ~88 GiB of GPU memory (measured). Confirm the GPU and its
+   memory (`rocm-smi --showmeminfo vram` / `--showmeminfo gtt`, or `nvidia-smi`). On unified-memory
+   machines (AMD Strix Halo, Apple-class designs) the limit is the GPU-visible pool (GTT), not
+   system RAM. Below ~90 GB, the only route is `load_in_4bit = true` in config.toml, which is
+   untested and which Unsloth advises against for this architecture: say so and let the user
+   decide.
+2. **Other model servers.** Anything else holding GPU memory must stop during training, merging
+   and GGUF conversion. Ask which services those are and how the user wants them stopped and
+   restored. List every port that serves something the user relies on in
+   `~/.config/caveowl/live-ports` (space-separated, e.g. `8080 8081`); every builder and gate in
+   this repo refuses those ports.
+3. **Bench port.** A free port for serving the stock model and the candidate (default 8110; the
+   skill builder also uses that port + 1 for a logging proxy). Set `BENCH_PORT` and
+   `CAVEOWL_BENCH_URL=http://127.0.0.1:$BENCH_PORT/v1`.
+4. **Will the model run as an agent?** The skill-trajectory slice and the skill gates need the
+   `pi` coding agent (https://github.com/earendil-works/pi) with the user's skills installed in
+   `~/.pi/agent/skills/`. The bundled prompt sets target the author's skills (weather, system
+   health, PDF reading, summarizing, humanizing text, explaining simply, a coffee tracker). If the
+   user's skills differ, either write prompt sets for theirs (copy the pattern in
+   `data/skill_run2.py`, keeping fixtures and prompts disjoint from `eval/skill_gate_wide.py`) or
+   set `skill_share = 0`. Without pi, also skip the pi-based gates.
+5. **API spend.** The caveman text pairs, the tool slice's prose and the agent-loop answers are
+   rewritten by Claude through the Message Batches API. Every rewrite script has `--dry-run`,
+   which prints the row count and a cost estimate and sends nothing. Show the user that estimate
+   and get an explicit yes before running anything with `--confirm-spend`. Never pass
+   `--confirm-spend` on your own judgement. The key comes from `ANTHROPIC_API_KEY` in the
+   environment; never write it to a file or a log.
+6. **Serving temperature.** The released adapter is served at 0.3. Gate at the temperature the
+   user will serve at; at 0.6 the adapter dropped a requested tool argument in 2 of 90 samples.
+
+### Rules while working
+
+- Run long jobs detached (`systemd-run --user`, `tmux`, or `nohup`) and poll their logs; training
+  takes ~14 hours on a Strix Halo and resumes from its newest checkpoint if interrupted.
+- Never run `uv run` or `pip install` inside another project's directory or venv; `uv run` syncs
+  that project's environment.
+- Keep scratch work out of RAM-backed `/tmp` when it is large (checkpoints, GGUFs: tens of GB).
+- Do not point any builder or gate at a live server. If you are unsure whether a port is live,
+  ask.
+- Report results with their numbers, including failures. A gate result that is worse than stock
+  is a finding for the user, not something to hide or rerun until it passes.
+
+### 1. Environment
+
+```bash
+uv venv --python 3.12 ~/venvs/caveowl
+# torch first, for the platform: ROCm wheel on AMD, CUDA wheel on NVIDIA. Verify:
+~/venvs/caveowl/bin/python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+uv pip install --python ~/venvs/caveowl/bin/python "unsloth[amd]"      # "unsloth" on NVIDIA
+uv pip install --python ~/venvs/caveowl/bin/python flash-linear-attention==0.5.2 anthropic tiktoken
+export PY=~/venvs/caveowl/bin/python HF_HUB_DISABLE_XET=1
+```
+
+Check: `torch.cuda.is_available()` prints True (ROCm builds report through the same API). Known
+good: unsloth 2026.10.3, transformers 5.17.0, torch 2.11.0+rocm7.13.0. On ROCm a warning that
+`causal_conv1d` falls back to PyTorch is expected.
+
+Also needed: a llama.cpp build with `llama-server`, `llama-imatrix`, `llama-quantize`,
+`llama-perplexity` and its `convert_hf_to_gguf.py`; `bwrap` (bubblewrap) for the sandboxed code
+tests; ~250 GB of free disk.
+
+### 2. Models
+
+```bash
+hf download ornith-ai/Ornith-1.5-35B-A3B --revision 10fbf86fed7ecee4a061f8b499a618f46001cac1 \
+    --local-dir ~/models/ornith-35b-hf
+hf download ornith-ai/Ornith-1.5-35B-A3B-GGUF --include "*Q4_K_M*" "*mmproj*" --local-dir ~/models/ornith-35b
+```
+
+Check: 16 `*.safetensors` shards plus `model.safetensors.index.json` in `~/models/ornith-35b-hf`.
+config.toml's `[model] base` must point there.
+
+### 3. Model-independent data (Claude rewrites; ask before spending)
+
+Caveman text pairs. Build them with https://github.com/JuliusBrussee/cavegemma's corpus pipeline
+(`data/build_prompts.py`/`build_corpus.py` there), then rewrite and split:
+
+```bash
+# in a cavegemma checkout: build the source rows (its build_prompts.py / build_corpus.py), then copy
+# its data/out/corpus_raw.jsonl here as data/out/corpus_raw.jsonl
+$PY data/synthesize_batch.py --in data/out/corpus_raw.jsonl --dry-run          # show the estimate
+$PY data/synthesize_batch.py --in data/out/corpus_raw.jsonl --confirm-spend    # after a yes
+# -> data/out/raw_pairs.jsonl. Filter and split with cavegemma's data/filter.py and data/split.py,
+# then save the splits as data/in/text_train.jsonl and data/in/text_eval.jsonl
+# (rows {"prompt", "target", ...}; the release had 1,689 train / 187 eval).
+```
+
+Tool-call slice:
+
+```bash
+$PY data/build_tool_corpus.py                                   # -> data/out/tool_corpus.jsonl
+$PY data/synthesize_batch.py --tool-corpus data/out/tool_corpus.jsonl --fewshot 4 --dry-run
+$PY data/synthesize_batch.py --tool-corpus data/out/tool_corpus.jsonl --fewshot 4 --confirm-spend
+$PY data/filter_tool_pairs.py                                    # -> data/in/tool.jsonl
+```
+
+Check: `data/in/text_train.jsonl` (~1,700 rows), `data/in/text_eval.jsonl` (~190) and
+`data/in/tool.jsonl` (the release kept 481 of 600) exist; the filter reports its rejection
+reasons. Without tiktoken installed, token counts fall back to the model's tokenizer.
+
+### 4. Serve the stock model on the bench port
+
+```bash
+BENCH_PORT=8110 LLAMA_SERVER=<path>/llama-server \
+    MMPROJ=~/models/ornith-35b/mmproj-Ornith-1.5-35B-BF16.gguf \
+    nohup scripts/serve_bench.sh ~/models/ornith-35b/Ornith-1.5-35B-Q4_K_M.gguf 0.6 > bench.log 2>&1 &
+until curl -sf localhost:8110/health; do sleep 5; done
+```
+
+The flags in `scripts/serve_bench.sh` should match how the user will serve the model; adjust them
+there, once, so stock and candidate are always served identically.
+
+### 5. Self-distilled data from the stock model
+
+```bash
+$PY data/build_anchor.py                                   # MBPP Python, test-filtered
+$PY data/build_anchor_ultra.py --validate                  # UltraData-Code sh/R/Rust, reference tests in bwrap
+$PY data/build_anchor_ultra.py
+$PY data/merge_anchors.py                                  # also holds out 90 tasks for the gate
+$PY data/build_bound_anchor.py --n 900                     # tool calls that keep a stated bound
+$PY data/build_think_anchor.py --n 450                     # thinking-on rows
+$PY data/build_skill_anchor.py --extra-attempts 2 --max-len 16384   # only with pi (see question 4)
+```
+
+Agent loops (optional, needs the Claude rewrite; otherwise set `ext_share = 0`):
+
+```bash
+hf download julien-c/synthtraces --repo-type dataset --local-dir data/out/ext/synthtraces
+$PY data/build_synthtraces.py                              # -> data/out/ext_traj.jsonl
+$PY data/synthesize_batch.py --tool-corpus data/out/ext_traj.jsonl --tool-out data/out/ext_traj_cave.jsonl \
+    --model claude-haiku-5-5 --dry-run
+$PY data/synthesize_batch.py --tool-corpus data/out/ext_traj.jsonl --tool-out data/out/ext_traj_cave.jsonl \
+    --model claude-haiku-5-5 --confirm-spend
+$PY data/skills_wrap_ext.py                                # -> data/out/ext_traj_cave_skills.jsonl
+# skills_wrap_ext.py copies skill markup from your skill trajectories, so build those first.
+```
+
+Point `skill_path` in config.toml at the skill file(s) you built. Then stop the bench server and
+check the mix without loading weights:
+
+```bash
+$PY train_unsloth.py --config config.toml --prepare-only
+```
+
+Check: no slice reports `missing`; per-slice rows are in the README's ballpark; the masked samples
+show loss (`⟦ ⟧`) only on assistant content, tool calls and `<|im_end|>`, plus the reasoning in
+thinking-on rows. A slice with many `prefix_mismatch` or `marker_in_content` drops means the data
+does not match the template.
+
+### 6. Train
+
+Stop the other GPU users first (question 2). Then:
+
+```bash
+$PY train_unsloth.py --config config_smoke.toml --no-resume 2>&1 | tee artifacts/smoke.log
+$PY train_unsloth.py --config config.toml 2>&1 | tee artifacts/train.log       # detached
+```
+
+Check the smoke log before the full run: trainable parameters ~0.94B with a non-zero
+"routed-expert LoRA" figure (0.0M means Unsloth's MoE path did not attach: stop and report), peak
+memory below the GPU's limit with a few GiB to spare, and seconds per step (multiply by the
+optimiser steps `--prepare-only` printed for the run time). During the full run, losses are in
+`artifacts/adapter/checkpoint-*/trainer_state.json`; expect ~1.1 at the start falling to ~0.6-0.8.
+
+### 7. Merge and convert
+
+```bash
+LLAMA=<llama.cpp checkout> bash merge_and_gguf.sh 2>&1 | tee artifacts/merge.log
+```
+
+Check: the log ends with the Q4_K_M path and the merge's tensor checks passed (untouched tensors,
+vision tower and MTP head byte-identical to the base). Restore the user's servers afterwards.
+
+### 8. Gate
+
+```bash
+T=0.3 OWL=artifacts/gguf/Ornith-1.5-35B-caveowl-Q4_K_M.gguf OWL_LABEL=caveowl \
+    KIT=<llm-bench-kit checkout> PI_MODELS_JSON=<pi models.json with a "local-cand" provider at the bench port> \
+    PERPLEXITY=<llama-perplexity> WIKI=<wikitext-2 wiki.test.raw> bash scripts/gate.sh
+```
+
+`KIT` is https://github.com/sjvrensburg/llm-bench-kit. Add `AGENTS_MD=<the user's AGENTS.md>` to
+run the skill gate a second time under the user's own agent instructions. The pass rule for
+every check is "candidate at least as good as stock, served the same way, run the same evening";
+the README's "The gate" lists what each check catches. Results are in `eval/out/gate/`.
+
+When a check fails, read the failing sessions in `eval/out/` before concluding anything, rerun
+that one check with more samples (stock varies between runs), and report both numbers. The fixes
+that worked for each failure seen so far are in docs/runs.md:
+
+| Symptom | Cause found | Fix |
+|---|---|---|
+| a skill family below stock, `skill_not_read` | no trajectories for that family | add self-distilled trajectories for it |
+| PDF or other simple tasks solved with bash, skill never opened | data rows with no skills listed in the system prompt | list (inapplicable) skills in every agent row |
+| empty answers when thinking is on | training rows were all thinking-off | thinking-on rows (`data/build_think_anchor.py`) |
+| a stated tool argument dropped at the served temperature | style pressure on optional arguments | bounded tool-call rows, more weight; serve at 0.3 |
+| process killed while loading the checkpoint | mmap kept a CPU copy of the weights | already fixed: `owl_load.py` loads with pread |
+
+### 9. Serve
+
+Serve the Q4_K_M with the stock model's vision projector, `--jinja`, `--reasoning-format
+deepseek`, the gated temperature, top-k 20, top-p 0.95. Anything that names the model (client
+configs, model ids) must be updated together; ask the user which clients use it.

@@ -25,7 +25,7 @@
 #   - Calibration text: wikitext-2 TRAIN split (wiki.train.raw). Not the test split, which is
 #     what the perplexity check below reads.
 #   - llama-imatrix / llama-quantize from ~/src/llama.cpp/build-vulkan, the stock tree this box
-#     trusts as its control arm (halo-prep pitfall #24: the ROCm trees compute garbage here).
+#     trusts as its control arm (the ROCm trees there computed garbage on gfx1151).
 #     Quantisation is CPU work; the backend only matters for imatrix, which runs the model.
 #   - mmproj: NOT rebuilt. LoRA never touched the vision tower (merge_owl.py checks it is
 #     byte-identical), so the stock mmproj-Ornith-1.5-35B-A3B-f16.gguf still matches.

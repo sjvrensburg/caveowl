@@ -1,6 +1,6 @@
 """Shared machinery for driving REAL pi against a bench llama-server and judging what it did.
 
-caveowl copy of ../cavegemma-e4b/data/pi_traj.py (9dd4267). Changes: the scratch agent's provider
+caveowl copy of cavegemma's data/pi_traj.py (the Gemma-4-E4B port). Changes: the scratch agent's provider
 is modelled on production's `local-ornith35` entry (Ornith-1.5-35B-A3B: id, thinkingLevelMap
 off/medium, maxTokens) instead of `local-ornith` (which serves Gemma-4-E4B since 2026-10-11),
 and the bench root is a subdirectory of /tmp/cavegemma-skill-bench so the two projects' scratch

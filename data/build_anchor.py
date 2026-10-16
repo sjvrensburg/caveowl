@@ -1,7 +1,7 @@
 """Build self-distilled code ANCHOR rows: MBPP tasks answered by the stock model, kept only if
 the answer passes the task's own tests.
 
-caveowl copy of ../cavegemma-e4b/data/build_anchor.py (9dd4267), regenerated against STOCK
+caveowl copy of cavegemma's data/build_anchor.py (the Gemma-4-E4B port), regenerated against STOCK
 Ornith-1.5-35B-A3B: an anchor is only an anchor if it is the model's OWN answer, so E4B's rows
 cannot be reused. Changes: model id, two parallel requests (the bench unit runs --parallel 2),
 and answers cut off by max_tokens are rejected (finish_reason "length"; training on them would

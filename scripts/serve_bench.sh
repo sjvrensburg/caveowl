@@ -16,7 +16,7 @@
 #   --port $BENCH_PORT     bench port (the skill builder's logging proxy uses BENCH_PORT+1)
 #   --parallel 2           two pi workers / two MBPP requests at once
 #   --ctx-size 262144      = 2 x 131072, so each slot gets :8088's window. --parallel set
-#                          explicitly turns kv_unified OFF (halo-prep CLAUDE.md, :8088 note), so
+#                          explicitly turns kv_unified OFF (llama-server enables it only when --parallel is auto), so
 #                          the two slots are independent 131072-token windows, which is what
 #                          pi's contextWindow (131072) for this model assumes.
 # Use the same binary and flags as whatever will serve the model for real, so stock behaviour

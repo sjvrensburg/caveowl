@@ -9,8 +9,8 @@
 # cand-* (not recorded: a stopped transient unit no longer exists to restart).
 #
 # What it does NOT stop, and why:
-#   - vibevoice-api: consumers lease it through halo-prep scripts/vibevoice-lease.sh, and a bare
-#     stop cuts a running voice message mid-clip (halo-prep CLAUDE.md). If it is up, this script
+#   - vibevoice-api: its consumers lease it, and a bare stop cuts a running voice message
+#     mid-clip. If it is up, this script
 #     refuses; wait for the lease holder to finish (it stops itself) and re-run.
 #   - pi-signal, pi-web: hold no GTT. While :8092 is down their requests fail; the `judge`
 #     extension fails open when :8098 is down. Nothing to restart for them afterwards.

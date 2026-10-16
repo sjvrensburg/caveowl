@@ -35,7 +35,7 @@ import owl_data as D  # noqa: E402
 from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 
 OUT = ROOT / "data" / "out" / "think_anchor.jsonl"
-SRC = ROOT.parent / "cavegemma-e4b" / "data" / "out" / "train.jsonl"
+SRC = ROOT / "data" / "in" / "text_train.jsonl"  # config.toml train_path
 
 
 def _k(r: dict) -> str:  # the text pairs carry no key: hash the prompt

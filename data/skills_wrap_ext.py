@@ -17,9 +17,15 @@ The skill blocks are copied verbatim from the skill trajectories (run1/run2 clea
 what pi renders. Only the system message changes; the Haiku rewrite is untouched. Checked: removing
 the inserted block gives back the row's original system prompt exactly.
 
+Input is the caveman rewrite of data/build_synthtraces.py's rows (data/synthesize_batch.py
+--tool-corpus data/out/ext_traj.jsonl --tool-out data/out/ext_traj_cave.jsonl; see
+build_synthtraces.py). The skill draw is seeded with each row's key (`synth-<session id>`).
+
 Run:
-    python3 data/skills_wrap_ext.py   # -> data/out/ext_traj_cave_skills.jsonl
+    python3 data/skills_wrap_ext.py   # data/out/ext_traj_cave.jsonl -> data/out/ext_traj_cave_skills.jsonl
+    python3 data/skills_wrap_ext.py --in data/out/ext_traj_cave_clean.jsonl   # after filter_tool_pairs.py
 """
+import argparse
 import json
 import random
 import re
@@ -38,6 +44,10 @@ BLOCK = re.compile(r"\n*<skills>.*?</skills>\n*", re.S)
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--in", dest="inp", type=Path, default=SRC)
+    ap.add_argument("--out", type=Path, default=DST)
+    args = ap.parse_args()
     blocks, counts, template = {}, Counter(), None
     for f in SKILL_ROWS:
         for line in f.open():
@@ -52,7 +62,7 @@ def main() -> None:
     inner = re.search(r"<available_skills>\n(.*?)</available_skills>", shell, re.S).group(1)
     ks, weights = zip(*sorted(counts.items()))
     rows, n_by = [], Counter()
-    for line in SRC.open():
+    for line in args.inp.open():
         r = json.loads(line)
         rng = random.Random(r["key"])
         k = rng.choices(ks, weights)[0]
@@ -70,8 +80,8 @@ def main() -> None:
         r["skills_listed"] = pick
         rows.append(r)
         n_by[k] += 1
-    DST.write_text("".join(json.dumps(r) + "\n" for r in rows))
-    print(f"{len(rows)} rows, skills per row {dict(n_by)} (skill rows: {dict(counts)}) -> {DST}")
+    args.out.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    print(f"{len(rows)} rows, skills per row {dict(n_by)} (skill rows: {dict(counts)}) -> {args.out}")
 
 
 if __name__ == "__main__":

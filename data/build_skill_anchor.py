@@ -1,7 +1,7 @@
 """Build self-distilled SKILL TRAJECTORY anchors: real pi sessions driven against the STOCK
 model, kept only if the model followed through, converted to training rows.
 
-caveowl copy of ../cavegemma-e4b/data/build_skill_anchor.py (9dd4267), driven against STOCK
+caveowl copy of cavegemma's data/build_skill_anchor.py (the Gemma-4-E4B port), driven against STOCK
 Ornith-1.5-35B-A3B on the bench unit cand-owl (:8110). Changes from the E4B port: provider/model
 are production's local-ornith35 / ornith-1.5-35b-a3b (pi_traj.PROVIDER, MODEL; thinkingLevelMap
 off/medium, thinking OFF here); rows are rendered and length-checked with Ornith's tokenizer and
@@ -408,7 +408,7 @@ PRIVATE_IP = re.compile(r"\b(?:192\.168|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7]))
 
 def scrub(s: str, agent_dir: str, work: str) -> str:
     """Production paths in place of scratch ones; MACs and LAN/tailnet IPs redacted (the
-    system-health rows run `ip -s link`, and docs/06 in halo-prep is the only place the
+    system-health rows run `ip -s link`, and the author's network docs are the only place the
     operator wants their topology)."""
     s = s.replace(agent_dir, PROD_AGENT).replace(work, PROD_CWD)
     s = MAC.sub("02:00:00:00:00:00", s)

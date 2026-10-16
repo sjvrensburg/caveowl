@@ -25,9 +25,18 @@ Conversion, and why:
   - Dropped: any session whose exchange calls a tool pi does not have (the 35B emitted a few
     calls named after a shell command), ends with stopReason error/length, or has no answer.
   - Failed guess calls (command not found / no such file) are pruned as in build_skill_anchor.
+  - Keys are `synth-<session id>`: letters, digits and '-' only, so they are valid Message
+    Batches custom_ids as they stand (data/synthesize_batch.py would map anything else). The
+    released rows used these keys, and data/skills_wrap_ext.py seeds its skill draw with the
+    key, so a different key would list different skills.
 
-Run:
-    ~/venvs/unsloth-probe/bin/python data/build_synthtraces.py
+Run (from the repo root), then the caveman rewrite of the answers and the skills wrap:
+    python data/build_synthtraces.py                       # -> data/out/ext_traj.jsonl
+    python data/synthesize_batch.py --tool-corpus data/out/ext_traj.jsonl \\
+        --tool-out data/out/ext_traj_cave.jsonl --model claude-haiku-5-5 --dry-run
+    python data/synthesize_batch.py --tool-corpus data/out/ext_traj.jsonl \\
+        --tool-out data/out/ext_traj_cave.jsonl --model claude-haiku-5-5 --confirm-spend
+    python data/skills_wrap_ext.py                         # -> data/out/ext_traj_cave_skills.jsonl
 """
 from __future__ import annotations
 
@@ -106,7 +115,7 @@ def convert(path: str, sp: str, tools: list) -> tuple[dict | None, str]:
                 return None, str(e)
             repo = Path(cwd).name
             sid = Path(path).stem.split("_")[-1]
-            return {"key": f"synthtraces:{sid}", "origin": f"julien-c/synthtraces:{mid}:{repo}:{Path(path).name}",
+            return {"key": f"synth-{sid}", "origin": f"julien-c/synthtraces:{mid}:{repo}:{Path(path).name}",
                     "license": "mit", "category": "ext_traj", "family": f"repo-qa:{MODELS[mid]}",
                     "tools": tools, "messages": out[:1] + body,
                     "pruned": {"failed_calls": n_err, "repeats": n_dup}}, "kept"
