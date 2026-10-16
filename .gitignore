@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+# weights, adapters, GGUFs, the fetched tokenizer copy
+artifacts/
+# generated data (anchors, skill runs, logs): regenerate with data/build_*.py; counts + sha256 in README
+data/out/
+# bench / gate sessions
+eval/out/
+# Unsloth writes its compiled kernels into the cwd
+unsloth_compiled_cache/
+tiny-qwen35moe-vl/

@@ -1,0 +1,120 @@
+# caveowl RUN 3 (2026-10-13). Identical to config_owl_run2.toml except the ext slice:
+#   - ext_path: the same 244 Haiku-caveman synthtraces rows, but each system prompt now lists
+#     5-8 skills that cannot apply to a repo question (data/skills_wrap_ext.py). Run 2's rows
+#     had no skills block, and its gate lost pdf 5/12 -> 0/12 to tool-first answers that never
+#     open SKILL.md; that slice is the suspect.
+# caveowl RUN 2 (2026-10-13). Same recipe as config_owl.toml (run 1) except:
+#   - max_seq_length 16384: run-2 skill rows carry the skill's SKILL.md (humanizer's alone is
+#     ~7k tokens; kept humanizer rows reach 14.7k, coffee 13.4k). At 4096 every coffee and
+#     humanizer row dropped (run 1 had 0 coffee rows for that reason). Memory checked by
+#     config_owl_run2_smoke.toml (32 longest rows) before the full run.
+#   - skill_path: run-1 rows minus 4 bad ones + run-2 rows (pdf-explore, humanizer, coffee),
+#     both through data/filter_run2.py (invented facts, off-procedure coffee dropped).
+#   - ext slice: Qwen3.6 pi sessions from julien-c/synthtraces (data/build_synthtraces.py),
+#     answers caveman-rewritten by Haiku 5.5 (cavegemma synthesize_batch.py --tool-corpus).
+# caveowl: caveman-style bf16 LoRA of ornith-ai/Ornith-1.5-35B-A3B, trained with Unsloth on the
+# EVO-X3. Loaded by train_unsloth.py. Data mix and hyperparameters are cavegemma v3's
+# (../cavegemma-e4b/training/config_v3.toml, the E4B port that passed every gate and is live on
+# :8092); what differs is the model, the trainer (Unsloth instead of plain peft) and the chat
+# template. Paths are relative to this repo unless absolute.
+
+[model]
+# The bf16 HF checkpoint at the revision pinned in its REVISION file (10fbf86f on 2026-10-12).
+base = "~/models/ornith-35b-hf"
+# Tokenizer + config fetched alone (HF API, same revision) into artifacts/tokenizer, so
+# --prepare-only works before the 72 GB of weights have landed. Used only when base has no
+# tokenizer.json yet.
+tokenizer_fallback = "artifacts/tokenizer"
+# Train on the template llama-server SERVES, not the HF repo's chat_template.jinja. The stock
+# GGUF :8088 serves (Ornith-1.5-35B-Q4_K_M.gguf) embeds an Unsloth-fixed variant (halo-prep
+# pitfall #29): developer-role merge, and tool-call arguments rendered `|string` for scalars
+# instead of `|tojson`. The assistant/think/tool-response markup is identical in both. Extracted
+# from the GGUF's tokenizer.chat_template on 2026-10-12, byte-exact.
+chat_template = "template/ornith-gguf-chat-template.jinja"
+max_seq_length = 16384
+dtype = "bfloat16"
+# bf16 LoRA, not QLoRA: Unsloth advises against 4-bit on Qwen3.5 (quantisation error), and the
+# probe (../unsloth-probe) puts bf16 LoRA at ~80-85 GiB, i.e. every resident model server must
+# be down (takedown_servers.sh). load_in_4bit = true would be the ~35-40 GiB fallback that fits
+# beside them, at that accuracy cost.
+load_in_4bit = false
+# Unsloth MoE backend for the routed experts. All three (grouped_mm, unsloth_triton,
+# native_torch) matched transformers' loss on the tiny qwen35moe in the probe; grouped_mm is
+# what the probe's attachment and 4-bit runs used.
+moe_backend = "grouped_mm"
+
+[lora]
+# cavegemma's r16 / alpha32 / dropout 0.
+r = 16
+alpha = 32
+dropout = 0.0
+bias = "none"
+# Leaf names, verified 2026-10-12 against Qwen3_5MoeForConditionalGeneration built from this
+# config.json on the meta device (transformers 5.17) and the checkpoint's index:
+#   self_attn.{q,k,v,o}_proj          only the 10 full-attention layers (3, 7, ..., 39)
+#   linear_attn.in_proj_qkv / in_proj_z / out_proj
+#                                     the 30 Gated DeltaNet layers. in_proj_a / in_proj_b
+#                                     (32-wide decay/beta heads) are left alone.
+#   mlp.shared_expert.{gate,up,down}_proj   all 40 layers
+#   mlp.experts.gate_up_proj / down_proj    fused 3-D Parameters (256 experts), not Linears:
+#                                     they get LoRA through Unsloth's MoE path (target
+#                                     parameters), which "gate_up_proj" + "down_proj" in this
+#                                     list switch on. checks/attach_tiny.py shows what attaches.
+# Not targeted: mlp.gate (router), mlp.shared_expert_gate (2048 -> 1), embeddings, lm_head.
+# The vision tower (model.visual.*: attn.qkv, attn.proj, mlp.linear_fc1/2, merger) shares no
+# leaf name with this list, and finetune_vision_layers = false fences it off as well, so the
+# stock mmproj GGUF keeps matching.
+target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                  "in_proj_qkv", "in_proj_z", "out_proj",
+                  "gate_proj", "up_proj", "down_proj", "gate_up_proj"]
+
+[data]
+# Model-independent data reused from the E4B port (../cavegemma-e4b, data/out is gitignored
+# there; README "Data" records their sha256). Anchors are NOT reused: they are self-distilled
+# and regenerated from stock Ornith into this repo's data/out.
+train_path = "../cavegemma-e4b/data/out/train.jsonl"
+eval_path = "../cavegemma-e4b/data/out/eval.jsonl"
+tool_path = "../cavegemma-e4b/data/out/tool_clean.jsonl"
+# "answer" (cavegemma's default): user turn = the row's prompt, assistant = the caveman target.
+format = "answer"
+tool_share = 0.25
+tool_eval_frac = 0.10
+# ~half MBPP Python (data/build_anchor.py), ~half UltraData-Code L3 sh/R/Rust
+# (data/build_anchor_ultra.py), both self-distilled from stock Ornith and test-filtered, merged
+# by data/merge_anchors.py (which also holds out eval/code_heldout.py's 90 tasks). Same share as
+# before the merge (operator's call, 2026-10-12): the mix changed, the anchor weight did not.
+anchor_path = "data/out/anchor_all.jsonl"
+anchor_share = 0.20
+skill_path = ["data/out/skill_traj_run1_clean.jsonl", "data/out/skill_traj_run2_clean.jsonl"]
+skill_share = 0.15
+skill_repeat = 2
+ext_path = "data/out/ext_traj_cave_skills.jsonl"  # ext_traj_cave.jsonl + data/skills_wrap_ext.py
+ext_share = 0.10
+instruction = "Rewrite in caveman-mode. Drop articles, filler, pleasantries. Keep code blocks byte-exact. Preserve technical meaning."
+
+[train]
+output_dir = "artifacts/adapter-owl-run3"
+num_train_epochs = 1
+max_steps = -1
+per_device_train_batch_size = 1
+gradient_accumulation_steps = 16
+learning_rate = 1e-4
+lr_scheduler_type = "cosine"
+warmup_ratio = 0.05
+weight_decay = 0.01
+# fp32 AdamW state for ~1B LoRA parameters is ~8 GiB; inside the probe's 80-85 GiB estimate.
+# bitsandbytes works on this box (probe: NF4 matmul checked) but its 8-bit optimiser was not
+# measured here, so it is not the default. "adamw_8bit" is the knob if the smoke run's peak is
+# too close to the 112 GiB GTT limit.
+optim = "adamw_torch"
+bf16 = true
+# Unsloth's own checkpointing ("unsloth": offloaded activations), set in get_peft_model. The HF
+# Trainer's gradient_checkpointing stays off so the two do not stack.
+use_gradient_checkpointing = "unsloth"
+logging_steps = 5
+save_strategy = "steps"
+save_steps = 25
+eval_strategy = "epoch"
+save_total_limit = 3
+report_to = "none"
+seed = 42
