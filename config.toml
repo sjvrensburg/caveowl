@@ -1,0 +1,117 @@
+# caveowl training config: the recipe that produced the released adapter (run 5 in docs/runs.md).
+# Paths are relative to the repo unless absolute; `~` is expanded.
+#
+#   python train_unsloth.py --config config.toml --prepare-only   # render + mask, print stats
+#   python train_unsloth.py --config config_smoke.toml             # 2 steps on the longest rows
+#   python train_unsloth.py --config config.toml                   # the run (resumes from checkpoints)
+
+[model]
+# The bf16 HF checkpoint of ornith-ai/Ornith-1.5-35B-A3B (the release was trained on revision
+# 10fbf86f).
+base = "~/models/ornith-35b-hf"
+# Tokenizer + config fetched alone (HF API, same revision) into artifacts/tokenizer, so
+# --prepare-only works before the 72 GB of weights have landed. Used only when base has no
+# tokenizer.json yet.
+tokenizer_fallback = "artifacts/tokenizer"
+# Train on the template llama-server SERVES, not the HF repo's chat_template.jinja. The stock
+# GGUF (Ornith-1.5-35B-Q4_K_M.gguf) embeds an Unsloth-fixed variant: developer-role merge, and
+# tool-call arguments rendered `|string` for scalars instead of `|tojson`. The
+# assistant/think/tool-response markup is identical in both. Extracted from the GGUF's
+# tokenizer.chat_template, byte-exact.
+chat_template = "template/ornith-gguf-chat-template.jinja"
+max_seq_length = 16384
+dtype = "bfloat16"
+# bf16 LoRA, not QLoRA: Unsloth advises against 4-bit on Qwen3.5 (quantisation error). bf16
+# peaks at ~88 GiB of GPU memory here (measured, 16384-token rows). load_in_4bit = true is the
+# ~35-40 GiB fallback, at that accuracy cost (untested).
+load_in_4bit = false
+# Unsloth MoE backend for the routed experts. All three (grouped_mm, unsloth_triton,
+# native_torch) matched transformers' loss on a tiny qwen35moe; grouped_mm is the one used.
+moe_backend = "grouped_mm"
+
+[lora]
+# cavegemma's r16 / alpha32 / dropout 0: ~0.94B trainable parameters on this model.
+r = 16
+alpha = 32
+dropout = 0.0
+bias = "none"
+# Leaf names, verified against Qwen3_5MoeForConditionalGeneration built from this
+# config.json on the meta device (transformers 5.17) and the checkpoint's index:
+#   self_attn.{q,k,v,o}_proj          only the 10 full-attention layers (3, 7, ..., 39)
+#   linear_attn.in_proj_qkv / in_proj_z / out_proj
+#                                     the 30 Gated DeltaNet layers. in_proj_a / in_proj_b
+#                                     (32-wide decay/beta heads) are left alone.
+#   mlp.shared_expert.{gate,up,down}_proj   all 40 layers
+#   mlp.experts.gate_up_proj / down_proj    fused 3-D Parameters (256 experts), not Linears:
+#                                     they get LoRA through Unsloth's MoE path (target
+#                                     parameters), which "gate_up_proj" + "down_proj" in this
+#                                     list switch on. checks/attach_tiny.py shows what attaches.
+# Not targeted: mlp.gate (router), mlp.shared_expert_gate (2048 -> 1), embeddings, lm_head.
+# The vision tower (model.visual.*: attn.qkv, attn.proj, mlp.linear_fc1/2, merger) shares no
+# leaf name with this list, and finetune_vision_layers = false fences it off as well, so the
+# stock mmproj GGUF keeps matching.
+target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                  "in_proj_qkv", "in_proj_z", "out_proj",
+                  "gate_proj", "up_proj", "down_proj", "gate_up_proj"]
+
+[data]
+# README "Data" says where each slice comes from. Shares are relative to the text pairs' train
+# count; a slice with fewer rows than its share goes in whole. Set a share to 0 to leave a slice
+# out (the trainer then does not need its file).
+#
+# Caveman text pairs (model-independent): JuliusBrussee/cavegemma's corpus, {"prompt","target"}.
+train_path = "data/in/text_train.jsonl"
+eval_path = "data/in/text_eval.jsonl"
+# Tool-calling rows (model-independent), OpenAI message shape; README "Data" has the format.
+tool_path = "data/in/tool.jsonl"
+# "answer" (cavegemma's default): user turn = the row's prompt, assistant = the caveman target.
+format = "answer"
+tool_share = 0.25
+tool_eval_frac = 0.10
+# ~half MBPP Python (data/build_anchor.py), ~half UltraData-Code L3 sh/R/Rust
+# (data/build_anchor_ultra.py), both self-distilled from stock Ornith and test-filtered, merged
+# by data/merge_anchors.py (which also holds out eval/code_heldout.py's 90 tasks).
+anchor_path = "data/out/anchor_all.jsonl"
+anchor_share = 0.20
+# Agent skill trajectories, self-distilled from stock through pi (data/build_skill_anchor.py), shown
+# twice. One file or a list.
+skill_path = ["data/out/skill_traj.jsonl"]
+skill_share = 0.15
+skill_repeat = 2
+# Long multi-step agent loops from another model of the same family, answers caveman-rewritten,
+# each system prompt listing skills that do not apply (data/build_synthtraces.py,
+# data/skills_wrap_ext.py).
+ext_path = "data/out/ext_traj_cave_skills.jsonl"
+ext_share = 0.10
+# Stock's own tool calls that carry a bound the user stated (data/build_bound_anchor.py).
+bound_path = "data/out/bound_anchor.jsonl"
+bound_share = 0.25
+# Thinking-on rows: stock's reasoning, closed, then the caveman answer (data/build_think_anchor.py).
+think_path = "data/out/think_anchor.jsonl"
+think_share = 0.10
+instruction = "Rewrite in caveman-mode. Drop articles, filler, pleasantries. Keep code blocks byte-exact. Preserve technical meaning."
+
+[train]
+output_dir = "artifacts/adapter"
+num_train_epochs = 1
+max_steps = -1
+per_device_train_batch_size = 1
+gradient_accumulation_steps = 16
+learning_rate = 1e-4
+lr_scheduler_type = "cosine"
+warmup_ratio = 0.05
+weight_decay = 0.01
+# fp32 AdamW state for ~1B LoRA parameters is ~8 GiB. "adamw_8bit" (bitsandbytes, untested here)
+# is the knob if the smoke run's peak is too close to your GPU memory.
+optim = "adamw_torch"
+bf16 = true
+# Unsloth's own checkpointing ("unsloth": offloaded activations), set in get_peft_model. The HF
+# Trainer's gradient_checkpointing stays off so the two do not stack.
+use_gradient_checkpointing = "unsloth"
+logging_steps = 5
+save_strategy = "steps"
+save_steps = 25
+eval_strategy = "epoch"
+save_total_limit = 3
+report_to = "none"
+seed = 42

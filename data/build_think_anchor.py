@@ -15,7 +15,7 @@ with the reasoning under --max-reasoning tokens. The row is
 rendered thinking-on by owl_data (reasoning, </think>, answer and <|im_end|> all carry loss): it
 keeps stock's way of thinking and puts the style where the style belongs, after </think>.
 
-Run (stock on :8110; refuses :8092/:8088):
+Run (stock on the bench port; owl_ports.refuse_live guards live servers):
     ~/venvs/unsloth-probe/bin/python data/build_think_anchor.py --n 300
 """
 from __future__ import annotations
@@ -32,6 +32,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 import owl_data as D  # noqa: E402
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 
 OUT = ROOT / "data" / "out" / "think_anchor.jsonl"
 SRC = ROOT.parent / "cavegemma-e4b" / "data" / "out" / "train.jsonl"
@@ -53,12 +54,12 @@ def ask(base: str, prompt: str, max_tokens: int) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="http://127.0.0.1:8110/v1")
+    ap.add_argument("--base", default=BENCH_URL)
     ap.add_argument("--n", type=int, default=300, help="prompts to try")
     ap.add_argument("--max-reasoning", type=int, default=2000)
     ap.add_argument("--workers", type=int, default=2)
     a = ap.parse_args()
-    assert not re.search(r":(8092|8088)\b", a.base), "bench port only"
+    refuse_live(a.base)
     rows = [r for r in D.read_jsonl(SRC) if (r.get("category") or "qa").lower() != "dialogue"]
     random.Random("caveowl-run5-think").shuffle(rows)
     cands = []

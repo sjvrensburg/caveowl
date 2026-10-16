@@ -10,14 +10,18 @@ twice with NO chat_template_kwargs and no sampler fields (the server's own sampl
 that sends none gets), max_tokens 4096. Counts per arm: empty visible answer, unfinished
 (finish_reason length), median words of the answers that exist. Pass: empty <= stock's.
 
-    python3 -I eval/think_on.py --base http://127.0.0.1:8110/v1 --label stock
+    python3 -I eval/think_on.py --label stock
 """
 import argparse
 import json
 import re
 import statistics
+import sys
 import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 
 PROMPTS = [
     "Why do onions make people cry?",
@@ -41,11 +45,11 @@ PROMPTS = [
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="http://127.0.0.1:8110/v1")
+    ap.add_argument("--base", default=BENCH_URL)
     ap.add_argument("--label", required=True)
     ap.add_argument("--repeats", type=int, default=2)
     a = ap.parse_args()
-    assert not re.search(r":(8092|8088)\b", a.base), "bench port only"
+    refuse_live(a.base)
     out = Path(__file__).resolve().parent / "out" / f"think_on-{a.label}.jsonl"
     empty = unfinished = 0
     words = []

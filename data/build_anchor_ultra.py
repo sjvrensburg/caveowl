@@ -35,6 +35,7 @@ import os
 import random
 import re
 import subprocess
+import sys
 import tempfile
 import threading
 import urllib.request
@@ -176,6 +177,10 @@ def generate(args) -> None:
     print(f"tasks {len(tasks)}  {stats}  -> {args.out}")
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--validate", action="store_true")
@@ -183,10 +188,11 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--jobs", type=int, default=6, help="parallel sandboxed test runs")
     ap.add_argument("--tasks", type=Path, default=ROOT / "data" / "out" / "ultra_tasks.jsonl")
-    ap.add_argument("--base", default="http://127.0.0.1:8110/v1")
+    ap.add_argument("--base", default=BENCH_URL)
     ap.add_argument("--out", type=Path, default=ROOT / "data" / "out" / "anchor_ultra.jsonl")
     ap.add_argument("--workers", type=int, default=2, help="the bench unit runs --parallel 2")
     args = ap.parse_args()
+    refuse_live(args.base)
     validate(args) if args.validate else generate(args)
 
 

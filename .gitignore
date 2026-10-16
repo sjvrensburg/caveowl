@@ -9,3 +9,5 @@ eval/out/
 # Unsloth writes its compiled kernels into the cwd
 unsloth_compiled_cache/
 tiny-qwen35moe-vl/
+# your own copies of the model-independent data (README "Data")
+data/in/

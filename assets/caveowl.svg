@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 460" role="img" aria-label="caveowl mascot: a stone-age owl in a spotted pelt, holding a wooden club, standing on a rock slab">
+  <title>caveowl</title>
+  <g stroke="#2B1D14" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- club, behind the body -->
+    <path d="M292 318 L310 326 L376 176 Q386 140 356 130 Q328 124 322 158 Z" fill="#C8904F"/>
+    <path d="M343 160 q8 4 4 14 M357 200 q-8 2 -6 10" fill="none" stroke-width="4"/>
+
+    <!-- rock slab -->
+    <path d="M58 384 Q54 360 82 356 L318 352 Q350 354 348 380 L344 420 Q342 444 314 444 L90 446 Q60 446 60 422 Z" fill="#A8A096"/>
+    <path d="M110 380 l14 18 l-6 14 M262 372 l-10 16 l12 20 M190 420 l18 -8" fill="none" stroke-width="4"/>
+
+    <!-- ear tufts -->
+    <path d="M122 146 L104 74 L166 114 Z" fill="#8A5428"/>
+    <path d="M278 146 L296 74 L234 114 Z" fill="#8A5428"/>
+
+    <!-- body -->
+    <path d="M200 96 C286 96 330 172 328 250 C326 330 276 362 200 362 C124 362 74 330 72 250 C70 172 114 96 200 96 Z" fill="#9C6233"/>
+
+    <!-- belly with feather scallops -->
+    <ellipse cx="200" cy="282" rx="78" ry="70" fill="#EBCB8F"/>
+    <path d="M160 250 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 M168 272 q8 10 16 0 q8 10 16 0 q8 10 16 0" fill="none" stroke-width="4"/>
+
+    <!-- spotted pelt: shoulder strap and skirt with a ragged hem -->
+    <path d="M286 222 L318 250 L156 334 L124 308 Z" fill="#F08A24"/>
+    <path d="M80 290 Q200 312 322 288 L324 336 L308 330 L296 350 L280 336 L262 356 L246 338 L228 358 L212 340 L194 360 L178 340 L160 358 L144 338 L126 354 L112 334 L96 346 L84 330 Z" fill="#F08A24"/>
+    <g fill="#2B1D14" stroke="none">
+      <ellipse cx="292" cy="246" rx="7" ry="5" transform="rotate(-30 292 246)"/>
+      <ellipse cx="240" cy="276" rx="6" ry="9" transform="rotate(20 240 276)"/>
+      <ellipse cx="190" cy="304" rx="8" ry="5"/>
+      <ellipse cx="140" cy="312" rx="5" ry="7"/>
+      <ellipse cx="110" cy="314" rx="8" ry="5" transform="rotate(15 110 314)"/>
+      <ellipse cx="170" cy="330" rx="6" ry="8"/>
+      <ellipse cx="228" cy="322" rx="9" ry="6" transform="rotate(-10 228 322)"/>
+      <ellipse cx="284" cy="312" rx="6" ry="8"/>
+      <ellipse cx="300" cy="334" rx="5" ry="4"/>
+      <ellipse cx="200" cy="344" rx="5" ry="4"/>
+    </g>
+
+    <!-- feet -->
+    <path d="M150 356 q-14 6 -16 16 q10 -2 14 -6 q2 10 6 12 q4 -6 4 -12 q6 4 12 4 q-4 -10 -12 -16 Z" fill="#F2A630"/>
+    <path d="M250 356 q14 6 16 16 q-10 -2 -14 -6 q-2 10 -6 12 q-4 -6 -4 -12 q-6 4 -12 4 q4 -10 12 -16 Z" fill="#F2A630"/>
+
+    <!-- wings: left rests, right grips the club -->
+    <path d="M84 214 Q34 262 66 338 Q96 330 108 286 Q112 248 84 214 Z" fill="#7E4D27"/>
+    <path d="M316 214 Q352 246 330 300 Q312 330 286 316 Q282 290 296 262 Q302 236 316 214 Z" fill="#7E4D27"/>
+    <path d="M296 292 q12 -6 22 4 M290 306 q12 -6 22 4" fill="none" stroke-width="4"/>
+
+    <!-- face mask -->
+    <path d="M200 150 C214 124 290 118 290 178 C290 226 238 236 200 222 C162 236 110 226 110 178 C110 118 186 124 200 150 Z" fill="#D9A766"/>
+
+    <!-- eyes -->
+    <circle cx="160" cy="180" r="36" fill="#FFF8E7"/>
+    <circle cx="240" cy="180" r="36" fill="#FFF8E7"/>
+    <circle cx="168" cy="186" r="14" fill="#2B1D14" stroke="none"/>
+    <circle cx="232" cy="186" r="14" fill="#2B1D14" stroke="none"/>
+    <circle cx="173" cy="181" r="4.5" fill="#FFFFFF" stroke="none"/>
+    <circle cx="237" cy="181" r="4.5" fill="#FFFFFF" stroke="none"/>
+
+    <!-- one heavy caveman brow across both eyes -->
+    <path d="M116 146 Q160 116 200 142 Q240 116 284 146 Q288 160 272 158 Q240 136 200 162 Q160 136 128 158 Q112 160 116 146 Z" fill="#2B1D14"/>
+
+    <!-- beak -->
+    <path d="M186 208 Q200 200 214 208 L200 238 Z" fill="#F2A630"/>
+  </g>
+</svg>

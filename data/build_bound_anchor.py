@@ -18,8 +18,8 @@ names overlap only where the name is generic (web_search, read_file); parameter 
 (max_results / limit / count / top_k / max_lines / lines / n) so what is learnt is "carry the
 bound", not one schema.
 
-Run (stock on :8110, servers otherwise as they are; refuses :8092/:8088):
-    python3 data/build_bound_anchor.py --base http://127.0.0.1:8110/v1 --n 400
+Run (stock on the bench port; owl_ports.refuse_live guards live servers):
+    python3 data/build_bound_anchor.py --n 400
 """
 from __future__ import annotations
 
@@ -29,8 +29,12 @@ import hashlib
 import json
 import random
 import re
+import sys
 import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))  # owl_ports
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "out" / "bound_anchor.jsonl"
 MODEL = "ornith-1.5-35b-a3b"
@@ -172,13 +176,13 @@ def ask(base: str, item: dict) -> dict | None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", required=True)
+    ap.add_argument("--base", default=BENCH_URL)
     ap.add_argument("--n", type=int, default=400)
     ap.add_argument("--tries", type=int, default=3)
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--dry", action="store_true", help="print items, call nothing")
     a = ap.parse_args()
-    assert not re.search(r":(8092|8088)\b", a.base), "bench port only"
+    refuse_live(a.base)
     items = make_items(a.n)
     if a.dry:
         for it in items[:8]:

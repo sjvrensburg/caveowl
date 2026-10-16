@@ -64,6 +64,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "data"))
+sys.path.insert(0, str(ROOT))
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 sys.path.insert(0, str(ROOT / "eval"))
 import pi_traj as P  # noqa: E402
 
@@ -692,7 +694,7 @@ def convert(items: list[dict], run_dir: Path, out_path: Path, n_distract: int,
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--upstream", default="http://127.0.0.1:8110")
+    ap.add_argument("--upstream", default=BENCH_URL.removesuffix("/v1"))
     ap.add_argument("--proxy-port", type=int, default=8111)
     ap.add_argument("--workers", type=int, default=2,
                     help="parallel pi runs; the bench server runs --parallel 2")
@@ -721,6 +723,7 @@ def main() -> None:
                     help="default system-health,coffee,pdf,summarize (run1/all); "
                          "pdf-explore,humanizer,coffee (run2)")
     args = ap.parse_args()
+    refuse_live(args.upstream)
     run2_only = args.set == "run2"
     out_dir = ROOT / "data" / "out"
     if args.set == "run4":

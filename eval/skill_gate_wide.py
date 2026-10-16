@@ -62,6 +62,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "data"))
+sys.path.insert(0, str(ROOT))
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 sys.path.insert(0, str(ROOT / "eval"))
 import pi_traj as P  # noqa: E402
 from skill_gate import wilson  # noqa: E402
@@ -455,7 +457,7 @@ def table(labels: list[str], run_dir: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="http://127.0.0.1:8110/v1")
+    ap.add_argument("--base", default=BENCH_URL)
     ap.add_argument("--model", default=P.MODEL)
     ap.add_argument("--label", default=None)
     ap.add_argument("--repeats", type=int, default=3)
@@ -471,10 +473,7 @@ def main() -> None:
         return rescore(args.rescore, args.run_dir)
     if args.table:
         return table(args.table, args.run_dir)
-    if ":8092" in args.base or ":8088" in args.base:
-        # :8088 is stock Ornith in production (Open Notebook's single slot); pi sessions there
-        # stall podcasts and chat. Serve stock on the bench port for baselines (code review).
-        sys.exit("refusing :8092/:8088 (live servers); serve the model on a bench port")
+    refuse_live(args.base)
 
     items = items_all()
     check_held_out(items)

@@ -8,7 +8,7 @@
 # the new GGUF after the servers are back (needs PATH and PI_MODELS_JSON, see gate.sh).
 set -uo pipefail
 R=~/Projects/caveowl; PY=~/venvs/unsloth-probe/bin/python
-CONFIG="${CONFIG:-config_owl.toml}"; ADAPTER="${ADAPTER:-artifacts/adapter-owl}"; TAG="${TAG:-}"
+CONFIG="${CONFIG:-config.toml}"; ADAPTER="${ADAPTER:-artifacts/adapter}"; TAG="${TAG:-}"
 GATE="${GATE:-0}"
 cd "$R"
 restore() { echo ">> $(date +%H:%M) restoring servers"; bash restore_servers.sh; }

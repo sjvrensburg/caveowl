@@ -98,7 +98,7 @@ cat <<NEXT
 
 Down: ${#UNITS[@]} model server(s)$( [[ ${#TIMERS[@]} -gt 0 ]] && echo ", ${#TIMERS[@]} timer(s) paused").
 GTT should now be a few GiB at most (the desktop). Then:
-  ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_owl_smoke.toml   # first time
-  ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_owl.toml
+  ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_smoke.toml   # first time
+  ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config.toml
 Afterwards (also after a failed run): bash restore_servers.sh
 NEXT

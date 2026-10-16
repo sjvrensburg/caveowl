@@ -2,7 +2,7 @@
 Ornith-1.5-35B-A3B's config.json names), same module tree as the real model, ~MBs, no download.
 
 It answers one question train_unsloth.py cannot answer without the 72 GB weights: with the
-target list in config_owl.toml, which modules does Unsloth's FastModel.get_peft_model actually
+target list in config.toml, which modules does Unsloth's FastModel.get_peft_model actually
 wrap? In particular: do the routed experts (fused `mlp.experts.gate_up_proj` / `down_proj`
 Parameters, not Linears) get LoRA through Unsloth's MoE path, do the DeltaNet projections and
 the shared expert attach, and does the vision tower stay untouched? One forward/backward on a
@@ -26,7 +26,7 @@ from unsloth import FastModel  # noqa: E402
 import torch  # noqa: E402
 from transformers import AutoConfig, AutoTokenizer, Qwen3_5MoeForConditionalGeneration  # noqa: E402
 
-cfg_toml = tomllib.loads((ROOT / "config_owl.toml").read_text())
+cfg_toml = tomllib.loads((ROOT / "config.toml").read_text())
 D = Path("tiny-qwen35moe-vl")
 tok = AutoTokenizer.from_pretrained(ROOT / "artifacts/tokenizer")
 if not D.exists():

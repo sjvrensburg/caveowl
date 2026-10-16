@@ -11,7 +11,7 @@ pi skill trajectories (x2), 1 epoch, lr 1e-4, r16/a32. What is new here and why:
   - FastModel, loading the full Qwen3_5MoeForConditionalGeneration (the class config.json
     names), not a text-only CausalLM: the adapter's module paths then match the checkpoint 1:1,
     so the merged save keeps the stock layout (vision tower included) and llama.cpp converts it
-    like the stock model. LoRA goes on the text decoder only (config_owl.toml [lora] has the
+    like the stock model. LoRA goes on the text decoder only (config.toml [lora] has the
     verified names); finetune_vision_layers=False and the leaf names keep the tower untouched,
     so the stock mmproj GGUF stays valid.
   - Masking for the Qwen-style template Ornith's GGUF serves, thinking OFF: owl_data.py.
@@ -21,10 +21,10 @@ pi skill trajectories (x2), 1 epoch, lr 1e-4, r16/a32. What is new here and why:
   - Over-length rows are DROPPED, not truncated (a cut code fence teaches the wrong thing).
 
 Run (venv: ~/venvs/unsloth-probe, recipe in ../unsloth-probe/RECIPE.sh):
-    ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_owl.toml --prepare-only
+    ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config.toml --prepare-only
     bash takedown_servers.sh       # bf16 LoRA is ~80-85 GiB: every resident server must be down
-    ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_owl_smoke.toml
-    ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_owl.toml
+    ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config_smoke.toml
+    ~/venvs/unsloth-probe/bin/python train_unsloth.py --config config.toml
     bash restore_servers.sh
 Resumes from the newest checkpoint-* in output_dir (--no-resume to start over).
 """

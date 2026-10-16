@@ -36,8 +36,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 BASE="${BASE:-$HOME/models/ornith-35b-hf}"
-ADAPTER="${ADAPTER:-artifacts/adapter-owl}"
-MERGED="${MERGED:-artifacts/merged-owl}"
+ADAPTER="${ADAPTER:-artifacts/adapter}"
+MERGED="${MERGED:-artifacts/merged}"
 OUTDIR="${OUTDIR:-artifacts/gguf}"
 NAME="${NAME:-Ornith-1.5-35B-caveowl}"
 METHOD="${METHOD:-unsloth}"            # merge_owl.py --method (peft = fallback)

@@ -6,8 +6,8 @@ data/merge_anchors.py holds out 30 reference-validated tasks per language
 (data/out/code_heldout.jsonl), picked from ALL validated tasks, so stock is not at 30/30 by
 construction. Same prompt, sampler and sandboxed test run as data/build_anchor_ultra.py.
 
-Usage (model on a bench port, never :8092/:8088):
-    python3 -I eval/code_heldout.py --base http://127.0.0.1:8110/v1 --label stock
+Usage (model on the bench port; owl_ports.refuse_live guards live servers):
+    python3 -I eval/code_heldout.py --label stock
 Pass rule: per language, candidate >= stock - 2 (temp 0, so reruns of one model agree; the
 slack is for single-task flips), and total >= stock.
 """
@@ -23,18 +23,19 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "data"))
+sys.path.insert(0, str(ROOT))
+from owl_ports import BENCH_URL, refuse_live  # noqa: E402
 from build_anchor_ultra import FENCE, ask, prompt_for, run_tests  # noqa: E402
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="http://127.0.0.1:8110/v1")
+    ap.add_argument("--base", default=BENCH_URL)
     ap.add_argument("--label", required=True)
     ap.add_argument("--tasks", type=Path, default=ROOT / "data" / "out" / "code_heldout.jsonl")
     ap.add_argument("--workers", type=int, default=2)
     args = ap.parse_args()
-    if ":8092" in args.base or ":8088" in args.base:
-        sys.exit("refusing :8092/:8088 (live servers); serve the model on a bench port")
+    refuse_live(args.base)
 
     tasks = [json.loads(l) for l in args.tasks.open()]
 
