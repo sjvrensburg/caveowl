@@ -14,7 +14,10 @@ fine-tune), trained with [Unsloth](https://github.com/unslothai/unsloth). It por
 the data a model needs to stay a working agent while it learns the style. It was developed on one
 AMD Strix Halo box (128 GB unified memory) and runs as that box's everyday assistant model.
 
-The recipe, the data builders and the gate are here. The weights are not published.
+The recipe, the data builders and the gate are here. The weights (run 5) are on Hugging Face at
+[stefanj0/caveowl-35b-a3b](https://huggingface.co/stefanj0/caveowl-35b-a3b): a Q4_K_M GGUF for
+llama.cpp, the vision projector and the LoRA adapter. Its model card is
+[`docs/hf-model-card.md`](docs/hf-model-card.md).
 
 **Just point your agent here.** Tell your coding agent (Claude Code, Codex, pi, ...) to read
 [`llms.txt`](llms.txt) and train caveowl for you. It lists the decisions to ask you about first,
