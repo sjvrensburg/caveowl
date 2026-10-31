@@ -27,6 +27,7 @@ params (run.yaml agent.params):
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 import threading
 import uuid
@@ -44,6 +45,12 @@ from skill_gate_wide import setup_work  # noqa: E402
 
 from hermit import Session  # noqa: E402
 from hermit.task import RunOutput  # noqa: E402
+
+# pi_traj.run_pi calls bare `pi`. A systemd unit's PATH lacks ~/.local/bin, and then every rollout
+# raises FileNotFoundError, which Hermit records as an error scoring 0 and trains on anyway: the
+# first training run (2026-10-31) spent 20 steps that way. Refuse to start instead.
+if shutil.which("pi") is None:
+    raise SystemExit("pipeline.py: `pi` is not on PATH (systemd units: pass --setenv=PATH=$PATH)")
 
 _local = threading.local()
 _RUN = uuid.uuid4().hex[:8]  # one tag per Hermit process, so concurrent runs never share dirs
