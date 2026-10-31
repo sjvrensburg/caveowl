@@ -278,6 +278,12 @@ def check_held_out(items: list[dict]) -> None:
     # run2 = data/skill_run2.py (pdf-explore, humanizer, coffee training prompts, 2026-10-13);
     # building it also checks its fixtures against this gate's.
     seen = {it["prompt"] for it in B.build_prompts(("run1", "run2"))} | {it["prompt"] for it in gate_items()}
+    # Hermit's training set (data/hermit_skill/, halo-prep docs/22): an adapter evolved on it is
+    # gated here, so its prompts must never be this gate's either. build_tasks.py checks the
+    # other direction (fixtures and answer values) before it writes tasks.jsonl.
+    hx = ROOT / "data" / "hermit_skill" / "tasks.jsonl"
+    if hx.exists():
+        seen |= {json.loads(ln)["prompt"].strip() for ln in hx.read_text().splitlines() if ln.strip()}
     for traj in (ROOT / "data" / "out" / "skill_traj.jsonl",
                  ROOT / "data" / "out" / "skill_traj_run2.jsonl"):
         if not traj.exists():

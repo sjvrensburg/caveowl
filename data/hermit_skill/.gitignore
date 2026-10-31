@@ -1,0 +1,3 @@
+runs/
+# adapter v0 is a copy of halo-prep config/pi-signal/AGENTS.md (private): build_tasks.py writes it locally
+seed_adapter/ADAPTER.md

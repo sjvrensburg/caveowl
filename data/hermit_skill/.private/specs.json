@@ -1,0 +1,440 @@
+{
+ "hx-coffee-0": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-1": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-2": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-3": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-4": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-5": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-6": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-coffee-7": {
+  "skill": "coffee-price-tracker",
+  "script_re": "report\\.py",
+  "ground_alt": {
+   "names": [
+    "Checkers",
+    "Pick n Pay",
+    "Takealot"
+   ]
+  }
+ },
+ "hx-pdf-0": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "1 018.53"
+  ]
+ },
+ "hx-pdf-1": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "KQ7741-MB"
+  ]
+ },
+ "hx-pdf-2": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "9 350.00"
+  ]
+ },
+ "hx-pdf-3": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "13.8"
+  ]
+ },
+ "hx-pdf-4": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "WX-55120-QT"
+  ]
+ },
+ "hx-pdf-5": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "CA 482-917"
+  ]
+ },
+ "hx-pdf-6": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "83"
+  ]
+ },
+ "hx-pdf-7": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "2026-11-30",
+   "30 November 2026",
+   "November 30"
+  ]
+ },
+ "hx-pdf-explore-0": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "236",
+   "89.7"
+  ]
+ },
+ "hx-pdf-explore-1": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "91.4",
+   "89.7"
+  ]
+ },
+ "hx-pdf-explore-2": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_norm": [
+   "evaluations@ukhanyo.org.za"
+  ]
+ },
+ "hx-pdf-explore-3": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "1 870",
+   "61.2"
+  ]
+ },
+ "hx-pdf-explore-4": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "64",
+   "61.2"
+  ]
+ },
+ "hx-pdf-explore-5": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "38",
+   "70.8"
+  ]
+ },
+ "hx-pdf-explore-6": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "7 400",
+   "1 870"
+  ]
+ },
+ "hx-pdf-explore-7": {
+  "skill": [
+   "ocr-and-documents",
+   "pdf-explore",
+   "summarize"
+  ],
+  "script_re": "pdftotext|extract_pymupdf|fitz|pymupdf",
+  "expect_all_norm": [
+   "Aqualine",
+   "72.5",
+   "70.8"
+  ]
+ },
+ "hx-summarize-0": {
+  "skill": "summarize",
+  "must_read_re": "memo\\.md",
+  "expect": [
+   "Marula"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-1": {
+  "skill": "summarize",
+  "must_read_re": "report\\.txt",
+  "expect": [
+   "Nightjar"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-2": {
+  "skill": "summarize",
+  "must_read_re": "retro\\.md",
+  "expect": [
+   "Osprey"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-3": {
+  "skill": "summarize",
+  "must_read_re": "letter\\.txt",
+  "expect": [
+   "Mopani"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-4": {
+  "skill": "summarize",
+  "must_read_re": "plan\\.md",
+  "expect": [
+   "Pangolin"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-5": {
+  "skill": "summarize",
+  "must_read_re": "review\\.md",
+  "expect": [
+   "Fynbos"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-6": {
+  "skill": "summarize",
+  "must_read_re": "postmortem\\.txt",
+  "expect": [
+   "Hornbill"
+  ],
+  "strict_fences": false
+ },
+ "hx-summarize-7": {
+  "skill": "summarize",
+  "must_read_re": "article\\.md",
+  "expect": [
+   "Okavango"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-0": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "newsletter\\.md",
+  "expect_num": [
+   "28"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-1": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "pitch\\.txt",
+  "expect_num": [
+   "90",
+   "ninety"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-2": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "about\\.md",
+  "expect_num": [
+   "15",
+   "fifteen"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-3": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "promo\\.md",
+  "expect_num": [
+   "64"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-4": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "bio\\.txt",
+  "expect_num": [
+   "20",
+   "twenty"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-5": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "release\\.md",
+  "expect_num": [
+   "2.4"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-6": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "welcome\\.md",
+  "expect_num": [
+   "300"
+  ],
+  "strict_fences": false
+ },
+ "hx-humanizer-7": {
+  "skill": [
+   "humanizer",
+   "sepia",
+   "academic-humanizer"
+  ],
+  "must_read_re": "listing\\.txt",
+  "expect_num": [
+   "4",
+   "four"
+  ],
+  "strict_fences": false
+ }
+}
