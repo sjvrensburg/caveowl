@@ -1,0 +1,10 @@
+hx-coffee-6
+hx-coffee-7
+hx-pdf-6
+hx-pdf-7
+hx-pdf-explore-6
+hx-pdf-explore-7
+hx-summarize-6
+hx-summarize-7
+hx-humanizer-6
+hx-humanizer-7

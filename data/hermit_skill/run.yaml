@@ -1,0 +1,54 @@
+# Hermit run: evolve pi-signal's AGENTS.md for caveowl's skill follow-through (halo-prep docs/22).
+#
+# Acting: caveowl on the bench port :8110 (scripts/serve_bench.sh), real pi sessions via
+# pipeline.py. Never :8092. Evolver: GEPA reflecting with Claude (operator's decision, 2026-10-31)
+# through the `anthropic-chat` backend in ~/.config/hermit/backends.yaml. The operator starts
+# every run, because only they can put the key in the environment:
+#
+#   withkeys ANTHROPIC_API_KEY -- ~/venvs/hermit/bin/hermit train --config data/hermit_skill/run.yaml
+#
+# Run overnight, outside the 07:00-09:30 job window. Final gate is eval/skill_gate_wide.py with
+# --agents-md pointing at the trained ADAPTER.md, never Hermit's own eval.
+data:
+  tasks: tasks.jsonl
+  train: train.txt               # 6 per family x 5 families
+  val: val.txt                   # 2 per family: GEPA's Pareto set
+  step_size: 3                   # GEPA's default reflection minibatch
+  shuffle_seed: 42
+task_info: task-info
+agent:
+  name: pipeline.py:run
+  concurrency: 2                 # serve_bench.sh runs --parallel 2
+  timeout_min: 12                # run_pi's own timeout is 600 s; this is the backstop
+  params:
+    thinking: "off"              # the setting of caveowl's 38/81 wide-gate result; see pipeline.py
+judge:
+  path: judge.py
+template: prompt-only@1.0
+start_from: seed_adapter         # ADAPTER.md = halo-prep config/pi-signal/AGENTS.md (build_tasks.py)
+evolver:
+  name: gepa
+  params:
+    files: [ADAPTER.md]
+llm:
+  model: anthropic-chat/claude-opus-5-5
+sandbox:
+  enabled: true                  # GEPA's reflection sees only training traces; this fences anything it starts
+  network: isolated
+  read: []
+  env: []
+  profiles:
+    # pi needs the real skills tree, node, the coffee tracker's SQLite and the bench port, and
+    # pi_traj already confines it (scratch agent dir, bench guard, no keys, cwd outside projects).
+    rollout: {enabled: false}
+    eval: {enabled: false}
+    check: {enabled: false}
+trainer:
+  run_name: caveowl-agents-gepa
+  output_dir: runs
+  tree_dir: runs/trees/caveowl-agents-gepa
+  epochs: 2
+  budget: {tokens: 1500000, hours: 8}   # no USD: anthropic-chat lists no prices
+  call_timeout_min: 30
+eval:
+  repeats: 3                     # as the wide gate
